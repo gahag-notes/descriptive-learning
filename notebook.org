@@ -89,23 +89,23 @@
      \text{rsup}(X) = \frac{\big|c(X)\big|}{|T|}
    \]
    #+end_export
-*** Algoritmos
-    O espaço de busca do problema é o conjunto potência do conjunto de itens. Se
-    considerarmos a relação de subconjuntos como uma relação de ordem parcial, temos que o
-    espaço de busca é estruturado como um reticulado. Este reticulado pode ser visualizado
-    como um grafo, onde somente as relações diretas são representadas.
-    #+attr_latex: :options [label=$\to$]
-    - Se $A \subseteq B \land |A| = |B| - 1$, então existe uma aresta entre $A$ e $B$.
-    Assim, a mineração de conjunto de itens frequentes é resolvida por uma busca neste
-    reticulado, seja em largura ou em profundidade. De fato, existem abordagens baseadas em
-    ambas as buscas. \\
+** Algoritmos
+   O espaço de busca do problema é o conjunto potência do conjunto de itens. Se
+   considerarmos a relação de subconjuntos como uma relação de ordem parcial, temos que o
+   espaço de busca é estruturado como um reticulado. Este reticulado pode ser visualizado
+   como um grafo, onde somente as relações diretas são representadas.
+   #+attr_latex: :options [label=$\to$]
+   - Se $A \subseteq B \land |A| = |B| - 1$, então existe uma aresta entre $A$ e $B$.
+   Assim, a mineração de conjunto de itens frequentes é resolvida por uma busca neste
+   reticulado, seja em largura ou em profundidade. De fato, existem abordagens baseadas em
+   ambas as buscas. \\
 
-    No entanto, a maioria das abordagens compartilham a mesma estrutura de busca:
-    #+attr_latex: :options [itemsep=0pt]
-    1. Identificam candidatos navegando o espaço de busca
-    2. Computam o suporte desses candidatos, descartando os infrequentes
-    @@latex:\newpage@@
-
+   No entanto, a maioria das abordagens compartilham a mesma estrutura de busca:
+   #+attr_latex: :options [itemsep=0pt]
+   1. Identificam candidatos navegando o espaço de busca
+   2. Computam o suporte desses candidatos, descartando os infrequentes
+   @@latex:\newpage@@
+*** Algoritmo ingênuo
     Um algorítmo ingênuo é definido: enumerar cada /itemset/ possível, e verificar no
     conjunto de dados quais transações contêm esse /itemset/.
     #+attr_latex: :options [itemsep=0pt]
@@ -120,3 +120,101 @@
     o conjunto de dados. Tal característica agrava fortemente a ineficiência deste
     algorítimo, onde o componente $\mathcal{O}(|I| \cdot |T|)$ corresponde à passadas no
     conjunto de dados.
+*** Apriori
+    O algoritmo Apriori é viabilizado pela propriedade de *anti-monotonicidade* da função
+    suporte:
+    #+begin_export latex
+    \[
+      A \subseteq B \implies \text{sup}(A) \geq \text{sup}(B)
+    \]
+    #+end_export
+    O Apriori utiliza busca em largura para minerar os padrões. A busca inicia com a
+    identificação dos itens frequentes. Depois, os conjuntos de tamanho $k$ são explorados
+    antes dos imediatamente maiores. Assim como o ingênuo, ele também opera em duas etapas:
+    #+attr_latex: :options [itemsep=0pt]
+    1. Geração de candidatos
+    2. Cálculo do suporte e eliminação dos infrequentes.
+    Candidatos que diferem em apenas um item são combinados para gerar os próximos
+    candidatos, de tamanho $k + 1$. Imediatamente, os que possuirem algum subconjunto
+    infrequente são descartados. Utilizando este método, os suportes dos candidatos são
+    atualizados com uma única passada no conjunto de dados. \\
+
+    No total, o número de passadas é drasticamente reduzido: $\mathcal{O}(I)$ \\
+
+    Apesar disso, o algoritmo ainda apresenta problemas:
+    #+attr_latex: :options [itemsep=0pt]
+    - Nem sempre a memória primária comporta todos candidatos de um nível, demandados para
+      busca em largura.
+    - As operações de poda e cálculo do suporte podem ser consideravelmente custosas, mas
+      podem ser atenuadas com estruturas de dados apropriadas.
+    - A redução do suporte mínimo implica um grande impacto no custo computacional, pois
+      quanto mais profundo o nível, seu tamanho cresce exponencialmente.
+    - A densidade da base de dados também decorre em um custo maior: transações com mais
+      itens implicam /itemsets/ maiores, mais subconjuntos são gerados para a contagem do
+      suporte.
+    @@latex:\newpage@@
+*** Equivalence Class Transformation
+    O Eclat tem como proposta eliminar a necessidade de passadas no conjunto de dados para
+    computar o suporte. Para isso, utiliza-se uma representação vertical dos dados, e o
+    fato de que a cobertura da união de dois /itemsets/ é a interseção de suas coberturas. \\
+
+    De forma equivalente, a ideia central do algoritmo é manter os /tidsets/ em memória
+    principal para computar o suporte dos /itemsets/ através de interseções desses
+    conjuntos. Contudo, a memória principal pode não comportar todos os /tidsets/. Assim, é
+    necessário algum mecanismo que possibilite a divisão do espaço de busca em
+    subproblemas independentes. \\
+
+    Esta divisão pode ser feita conforme uma relação de equivalência estabelecida sobre os
+    candidatos. Seja $p: \mathcal{P}(I) \times N \to \mathcal{P}(I)$ uma função prefixo. A
+    seguinte relação é uma relação de equivalência:
+    #+begin_export latex
+    \begin{align*}
+      & \theta_k \subseteq \mathcal{P}(I) \times \mathcal{P} \\
+      & A \> \theta_k \> B \equiv p(A, k) = p(B, k)
+    \end{align*}
+    #+end_export
+    Dessa forma, induz-se uma partição dos conjuntos de itens em classes de equivalência,
+    onde todos os elementos compartilham um certo prefixo. \\
+
+    Durante a busca em profundidade, o algoritmo particiona os conjuntos de itens conforme
+    a relação de equivalência e o nível da árvore. O cálculo do suporte no algoritmo se
+    restringe a calcular o tamanho do /tidset/. \\
+
+    Apesar disso, o algoritmo ainda apresenta problemas:
+    #+attr_latex: :options [itemsep=0pt]
+    - O tempo de execução depende do cálculo da interseção dos /tidsets/.
+    - O custo computacional do algoritmo está diretamente relacionado ao tamanho dos
+      /tidsets/.
+    - O custo de espaço também depende do tamanho. Quanto mais denso o conjunto de dados,
+      mais largos serão os /tidsets/.
+*** dEclat
+    De forma a atacar o problema de espaço do Eclat, podemos substituir os /tidsets/ pela
+    diferença entre os mesmos e os prefixos que os definem para os membros de cada
+    classe. Tal conjunto é denomidado *diffset*. Para um prefixo $P$ e um /itemset/ $PX$, o
+    /diffset/ de $X$ é
+    #+begin_export latex
+    \[
+      d(PX) = c(P) - c(X)
+    \]
+    #+end_export
+    Somente os /diffsets/ são armazenados, portanto o suporte não é mais obtido como a
+    cardinalidade desse conjunto. Calculamos o suporte de um itemset $PXY$, obtido a
+    partir de $PX$ e $PY$, da seguinte forma:
+    #+begin_export latex
+    \[
+      \text{sup}(PXY) = \text{sup}(PX) - \left|d(PXY)\right|
+    \]
+    #+end_export
+    Tal solução passa por computar o diffset de $PXY$:
+    #+begin_export latex
+    \[
+      d(PXY) = d(PY) - d(PX)
+    \]
+    #+end_export
+    Em outras palavras, podemos usar os diffsets dos conjuntos base para calcular o
+    diffset do novo candidato. \\
+
+    Essa abordagem se mostra muito eficiente para conjuntos densos. Porém, em conjuntos
+    esparsos, o algoritmo original é a melhor opção.
+
+
