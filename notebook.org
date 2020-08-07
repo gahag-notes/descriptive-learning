@@ -1,7 +1,13 @@
 # -*- after-save-hook: org-latex-export-to-pdf; -*-
 #+latex_header: \usepackage[margin=2cm]{geometry}
 #+latex_header: \usepackage{enumitem}
+#+latex_header: \usepackage{multicol}
 #+latex_header: \setlength{\parindent}{0cm}
+#+latex_header: \usepackage{svg}
+#+latex_header: \usepackage[brazil]{babel}
+#+language: pt_BR
+
+#+property: header-args+ :eval never-export
 
 #+title: Aprendizado Descritivo
 #+options: date:nil
@@ -67,7 +73,7 @@
   #+end_export
 
   Desta forma, podemos representar um conjunto de dados de duas formas:
-  - Horizontal: :: o conjunto de transações e suas intesões: $\big\{\big(t, i(t)\big) \mid t \in T \big\}$
+  - Horizontal: :: o conjunto de transações e suas intensões: $\big\{\big(t, i(t)\big) \mid t \in T \big\}$
   - Vertical : :: o conjunto de itens e suas coberturas: $\big\{\big(x, c(x)\big) \mid x \in I \big\}$
 ** Metodologia
    A identificação de regras de associação, em geral, envolve duas etapas:
@@ -139,7 +145,7 @@
     infrequente são descartados. Utilizando este método, os suportes dos candidatos são
     atualizados com uma única passada no conjunto de dados. \\
 
-    No total, o número de passadas é drasticamente reduzido: $\mathcal{O}(I)$ \\
+    No total, o número de passadas é drasticamente reduzido: $\mathcal{O}(|I|)$ \\
 
     Apesar disso, o algoritmo ainda apresenta problemas:
     #+attr_latex: :options [itemsep=0pt]
@@ -216,5 +222,180 @@
 
     Essa abordagem se mostra muito eficiente para conjuntos densos. Porém, em conjuntos
     esparsos, o algoritmo original é a melhor opção.
+*** FP-Growth
+    O algoritmo FP-Growth procura atacar dois problemas presentes nas abordagens
+    anteriores:
+    #+attr_latex: :options [itemsep=0pt]
+    - Repetidas passadas sobre a base de dados.
+    - Geração de candidatos.
+    Para isso:
+    #+attr_latex: :options [itemsep=0pt]
+    1. Adota-se uma estratégia de busca em profundidade.
+    2. Adota-se projeções dos dados para mantê-los em memória principal.
+    3. Utiliza-se uma árvore especial de prefixos denominada FP-Tree.
+    4. Busca-se os padrões inteiramente através desta árvore, sem necessidade de retorno
+       aos dados.
+    A FP-Tree constitui uma árvore de prefixos tradicional, duplamente conectada,
+    adicionada de uma tabela auxiliar de localização. Cada nó contém um item e sua
+    frequência *naquele prefixo*. Portanto, um mesmo item pode constar em vários nós, caso
+    ocorra em prefixos distintos. Já a tabela possui as seguintes colunas:
+    #+attr_latex: :options [itemsep=0pt]
+    - 1. Item: :: identificador do item, índice da tabela.
+    - 2. Frequência: :: frequência individual de cada item (denota a ordem dos itens).
+    - 3. Nós: :: coleção de referências para os nós da árvore referentes ao item.
 
+    Sua construção se dá em duas fases:
+    #+attr_latex: :options [itemsep=0pt]
+    - 1. Computa-se a frequêcia individual dos itens: :: (Uma passada nos dados) \\
+      Itens infrequentes são descartados, pois não podem formar padrões frequentes.
+    - 2. Insere-se cada transação, através dos seus itens ordenados: :: (Outra passada) \\
+      Itens são ordenados em ordem decrescente de frequência, sendo os infrequentes
+      filtrados.
 
+    Com a FP-Tree construída, inicia a mineração de padrões. \\
+
+    Para cada item em ordem *crescente*:
+    #+attr_latex: :options [itemsep=0pt]
+    1. Constrói-se uma *nova árvore de prefixos* a partir dos prefixos deste item,
+       desconsiderando o item em questão.
+    2. Desta, descarta-se os itens cuja frequência no prefixo é inferior ao suporte
+       mínimo, e agrupa-se os nós de itens iguais até que a árvore constitua apenas um
+       ramo.
+    3. Considera-se este ramo um conjunto. Nesta iteração, o conjunto dos padrões
+       extraídos é o conjunto potência do ramo, acrescendo em cada padrão o item em
+       questão.
+
+    *Exemplo*: (suporte mínimo = 2)
+    #+caption: Base de dados
+    | /tid/ | a            | b            | c            | d            | e            | f            |
+    |-----+--------------+--------------+--------------+--------------+--------------+--------------|
+    |   1 | $\checkmark$ |              | $\checkmark$ | $\checkmark$ |              | $\checkmark$ |
+    |   2 |              | $\checkmark$ | $\checkmark$ |              |              |              |
+    |   3 |              |              | $\checkmark$ |              | $\checkmark$ | $\checkmark$ |
+    |   4 | $\checkmark$ |              |              | $\checkmark$ |              |              |
+    |   5 |              | $\checkmark$ | $\checkmark$ |              |              | $\checkmark$ |
+    |   6 | $\checkmark$ |              | $\checkmark$ |              |              | $\checkmark$ |
+
+    #+latex: \newpage
+    FP-Tree fase 1:
+    #+begin_src dot :file images/fp-tree-1.svg
+      graph g {
+        graph [ bgcolor = transparent ]
+        node [ shape=circle ]
+        tbl [
+          shape = plaintext
+          label = <
+            <table border='0' cellspacing='0'>
+              <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+              <tr><td>c</td><td>5</td><td>Ø</td></tr>
+              <tr><td>f</td><td>4</td><td>Ø</td></tr>
+              <tr><td>a</td><td>3</td><td>Ø</td></tr>
+              <tr><td>b</td><td>2</td><td>Ø</td></tr>
+              <tr><td>d</td><td>2</td><td>Ø</td></tr>
+            </table>
+          >
+        ]
+        Ø;
+      }
+    #+end_src
+    #+attr_latex: :width 160px
+    #+results:
+    [[file:images/fp-tree-1.svg]]
+
+    FP-Tree fase 2:
+    #+begin_src dot :file images/fp-tree-2.svg
+      graph g {
+        graph [ bgcolor = transparent ]
+        node [ shape=circle, margin = 0 ]
+
+        tbl [
+          shape = plaintext
+          label = <
+            <table border='0' cellspacing='0'>
+              <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+              <tr><td>c</td><td>5</td><td port='c'>1</td></tr>
+              <tr><td>f</td><td>4</td><td port='f'>1</td></tr>
+              <tr><td>a</td><td>3</td><td port='a'>2</td></tr>
+              <tr><td>b</td><td>2</td><td port='b'>2</td></tr>
+              <tr><td>d</td><td>2</td><td port='d'>2</td></tr>
+            </table>
+          >
+        ]
+
+        root [ label = Ø ];
+        c1 [ label = "c(5)" ]
+        f1 [ label = "f(4)" ]
+        a1 [ label = "a(2)" ]
+        d1 [ label = "d(1)" ]
+        b1 [ label = "b(1)" ]
+        b2 [ label = "b(1)" ]
+        a2 [ label = "a(1)" ]
+        d2 [ label = "d(1)" ]
+
+        root -- c1
+        c1 -- f1
+        f1 -- a1
+        a1 -- d1
+        f1 -- b1
+        c1 -- b2
+        root -- a2
+        a2 -- d2
+
+        tbl:c -- c1 [ style = dashed ]
+        tbl:f -- f1 [ style = dashed, color = blue ]
+        tbl:a -- a1 [ style = dashed, color = orange ]
+        tbl:a -- a2 [ style = dashed, color = orange ]
+        tbl:b -- b1 [ style = dashed, color = green ]
+        tbl:b -- b2 [ style = dashed, color = green ]
+        tbl:d -- d1 [ style = dashed, color = red ]
+        tbl:d -- d2 [ style = dashed, color = red ]
+      }
+    #+end_src
+    #+attr_latex: :width 250px
+    #+results:
+    [[file:images/fp-tree-2.svg]]
+
+    Mineração de padrões a partir do item *d*:
+    #+attr_latex: :options [itemsep=0pt]
+    1. Projeção dos prefixos:
+       #+begin_src dot :file images/fp-tree-3.svg
+         graph g {
+           graph [ bgcolor = transparent, rankdir = LR ]
+           node [ shape=circle, margin = 0 ]
+   
+           root [ label = Ø ];
+           c1 [ label = "c(1)" ]
+           f1 [ label = "f(1)" ]
+           a1 [ label = "a(1)" ]
+           a2 [ label = "a(1)" ]
+   
+           root -- c1
+           c1 -- f1
+           f1 -- a1
+           root -- a2
+         }
+       #+end_src
+       #+attr_latex: :width 180px
+       #+results:
+       [[file:images/fp-tree-3.svg]]
+    2. Filtragem e redução:
+       #+begin_src dot :file images/fp-tree-4.svg
+         graph g {
+           graph [ bgcolor = transparent, rankdir = LR ]
+           node [ shape=circle, margin = 0 ]
+   
+           root [ label = Ø ];
+           a1 [ label = "a(2)" ]
+   
+           root -- a1
+         }
+       #+end_src
+       #+attr_latex: :width 80px
+       #+results:
+       [[file:images/fp-tree-4.svg]]
+    3. Padrões resultantes:
+       #+begin_export latex
+       \[
+         \big\{ d, ad \big\}
+       \]
+       #+end_export
