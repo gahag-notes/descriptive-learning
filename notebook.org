@@ -206,7 +206,7 @@
     \]
     #+end_export
     Somente os /diffsets/ são armazenados, portanto o suporte não é mais obtido como a
-    cardinalidade desse conjunto. Calculamos o suporte de um itemset $PXY$, obtido a
+    cardinalidade desse conjunto. Calculamos o suporte de um /itemset/ $PXY$, obtido a
     partir de $PX$ e $PY$, da seguinte forma:
     #+begin_export latex
     \[
@@ -254,18 +254,19 @@
       Itens são ordenados em ordem decrescente de frequência, sendo os infrequentes
       filtrados.
 
-    Com a FP-Tree construída, inicia a mineração de padrões. \\
+    Com a FP-Tree construída, inicia a mineração recursiva de padrões. \\
 
     Para cada item em ordem *crescente*:
     #+attr_latex: :options [itemsep=0pt]
     1. Constrói-se uma *nova FP-Tree* a partir dos prefixos deste item, desconsiderando o
-       item em questão.
-    2. Desta, descarta-se os itens cuja frequência no prefixo é inferior ao suporte
-       mínimo, e agrupa-se os nós de itens iguais até que a árvore constitua apenas um
-       ramo.
-    3. Considera-se este ramo um conjunto. Nesta iteração, o conjunto dos padrões
-       extraídos é o conjunto potência do ramo, acrescendo em cada padrão o item em
-       questão.
+       item em questão. É importante calcular as frequências apenas nos prefixos
+       considerados.
+    2. Desta, descarta-se os itens cuja frequência na árvore é inferior ao suporte
+       mínimo. 
+    3. Caso a árvore constitua um ramo, considera-se este ramo um conjunto, e deste
+       extrai-se o conjunto potência. Caso contrário, repete-se o processo recursivamente
+       para cada item da árvore.
+    4. Finalmente, acresce-se aos conjuntos extraídos o item da iteração.
 
     *Exemplo*: (suporte mínimo = 2)
     #+caption: Base de dados
@@ -279,125 +280,556 @@
     |   6 | $\checkmark$ |              | $\checkmark$ |              |              | $\checkmark$ |
 
     #+latex: \newpage
-    FP-Tree fase 1:
-    #+begin_src dot :file images/fp-tree-1.svg
-      graph g {
-        graph [ bgcolor = transparent ]
-        node [ shape=circle ]
-        tbl [
-          shape = plaintext
-          label = <
-            <table border='0' cellspacing='0'>
-              <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
-              <tr><td>c</td><td>5</td><td>Ø</td></tr>
-              <tr><td>f</td><td>4</td><td>Ø</td></tr>
-              <tr><td>a</td><td>3</td><td>Ø</td></tr>
-              <tr><td>b</td><td>2</td><td>Ø</td></tr>
-              <tr><td>d</td><td>2</td><td>Ø</td></tr>
-            </table>
-          >
-        ]
-        Ø;
-      }
-    #+end_src
-    #+attr_latex: :width 160px
-    #+results:
-    [[file:images/fp-tree-1.svg]]
 
-    FP-Tree fase 2:
-    #+begin_src dot :file images/fp-tree-2.svg
-      graph g {
-        graph [ bgcolor = transparent ]
-        node [ shape=circle, margin = 0 ]
+    Construção da FP-Tree:
+    #+latex: \begin{multicols}{2}
+    1. Cálculo da frequência:
+       #+begin_src dot :file images/fp-tree-1.svg
+         graph g {
+           graph [ bgcolor = transparent ]
+           node [ shape=circle ]
+           Ø;
+           tbl [
+             shape = plaintext
+             label = <
+               <table border='0' cellspacing='0'>
+                 <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+                 <tr><td>c</td><td>5</td><td>Ø</td></tr>
+                 <tr><td>f</td><td>4</td><td>Ø</td></tr>
+                 <tr><td>a</td><td>3</td><td>Ø</td></tr>
+                 <tr><td>b</td><td>2</td><td>Ø</td></tr>
+                 <tr><td>d</td><td>2</td><td>Ø</td></tr>
+               </table>
+             >
+           ]
+         }
+       #+end_src
+       #+attr_latex: :width 150px
+       #+results:
+       [[file:images/fp-tree-1.svg]]
+       #+latex: \vfill\null\columnbreak
+    2. Inserção das transações:
+       #+begin_src dot :file images/fp-tree-2.svg
+         graph g {
+           graph [ bgcolor = transparent ]
+           node [ shape=circle, margin = 0 ]
+   
+           root [ label = Ø ];
+           c1 [ label = "c(5)", color = violet ]
+           f1 [ label = "f(4)", color = orange ]
+           a1 [ label = "a(2)", color = lightgreen ]
+           d1 [ label = "d(1)", color = dodgerblue ]
+           b1 [ label = "b(1)", color = crimson ]
+           b2 [ label = "b(1)", color = crimson ]
+           a2 [ label = "a(1)", color = lightgreen ]
+           d2 [ label = "d(1)", color = dodgerblue ]
+   
+           tbl [
+             shape = plaintext
+             label = <
+               <table border='0' cellspacing='0'>
+                 <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+                 <tr><td>c</td><td>5</td><td bgcolor='violet'>1</td></tr>
+                 <tr><td>f</td><td>4</td><td bgcolor='orange'>1</td></tr>
+                 <tr><td>a</td><td>3</td><td bgcolor='lightgreen'>2</td></tr>
+                 <tr><td>b</td><td>2</td><td bgcolor='crimson'>2</td></tr>
+                 <tr><td>d</td><td>2</td><td bgcolor='dodgerblue'>2</td></tr>
+               </table>
+             >
+           ]
+   
+           root -- c1
+           c1 -- f1
+           f1 -- a1
+           a1 -- d1
+           f1 -- b1
+           c1 -- b2
+           root -- a2
+           a2 -- d2
+         }
+       #+end_src
+       #+attr_latex: :width 230px
+       #+results:
+       [[file:images/fp-tree-2.svg]]
+    #+latex: \end{multicols}
 
-        tbl [
-          shape = plaintext
-          label = <
-            <table border='0' cellspacing='0'>
-              <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
-              <tr><td>c</td><td>5</td><td port='c'>1</td></tr>
-              <tr><td>f</td><td>4</td><td port='f'>1</td></tr>
-              <tr><td>a</td><td>3</td><td port='a'>2</td></tr>
-              <tr><td>b</td><td>2</td><td port='b'>2</td></tr>
-              <tr><td>d</td><td>2</td><td port='d'>2</td></tr>
-            </table>
-          >
-        ]
-
-        root [ label = Ø ];
-        c1 [ label = "c(5)" ]
-        f1 [ label = "f(4)" ]
-        a1 [ label = "a(2)" ]
-        d1 [ label = "d(1)" ]
-        b1 [ label = "b(1)" ]
-        b2 [ label = "b(1)" ]
-        a2 [ label = "a(1)" ]
-        d2 [ label = "d(1)" ]
-
-        root -- c1
-        c1 -- f1
-        f1 -- a1
-        a1 -- d1
-        f1 -- b1
-        c1 -- b2
-        root -- a2
-        a2 -- d2
-
-        tbl:c -- c1 [ style = dashed ]
-        tbl:f -- f1 [ style = dashed, color = blue ]
-        tbl:a -- a1 [ style = dashed, color = orange ]
-        tbl:a -- a2 [ style = dashed, color = orange ]
-        tbl:b -- b1 [ style = dashed, color = green ]
-        tbl:b -- b2 [ style = dashed, color = green ]
-        tbl:d -- d1 [ style = dashed, color = red ]
-        tbl:d -- d2 [ style = dashed, color = red ]
-      }
-    #+end_src
-    #+attr_latex: :width 250px
-    #+results:
-    [[file:images/fp-tree-2.svg]]
-
-    Mineração de padrões a partir do item *d*:
+    Mineração de padrões a partir do item $d$:
+    #+latex: \begin{multicols}{2}
     #+attr_latex: :options [itemsep=0pt]
     1. Projeção dos prefixos:
        #+begin_src dot :file images/fp-tree-3.svg
          graph g {
-           graph [ bgcolor = transparent, rankdir = LR ]
+           graph [ bgcolor = transparent ]
            node [ shape=circle, margin = 0 ]
-   
+
            root [ label = Ø ];
-           c1 [ label = "c(1)" ]
-           f1 [ label = "f(1)" ]
-           a1 [ label = "a(1)" ]
-           a2 [ label = "a(1)" ]
-   
+           c1 [ label = "c(1)", color = violet ]
+           f1 [ label = "f(1)", color = orange ]
+           a1 [ label = "a(1)", color = lightgreen ]
+           a2 [ label = "a(1)", color = lightgreen ]
+
+           tbl [
+             shape = plaintext
+             label = <
+               <table border='0' cellspacing='0'>
+                 <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+                 <tr><td>a</td><td>2</td><td bgcolor='lightgreen'>2</td></tr>
+                 <tr><td>c</td><td>1</td><td bgcolor='violet'>1</td></tr>
+                 <tr><td>f</td><td>1</td><td bgcolor='orange'>1</td></tr>
+               </table>
+             >
+           ]
+
            root -- c1
            c1 -- f1
            f1 -- a1
            root -- a2
          }
        #+end_src
-       #+attr_latex: :width 180px
+       #+attr_latex: :width 170px
        #+results:
        [[file:images/fp-tree-3.svg]]
-    2. Filtragem e redução:
+    2. Remoção dos infrequentes:
        #+begin_src dot :file images/fp-tree-4.svg
          graph g {
-           graph [ bgcolor = transparent, rankdir = LR ]
+           graph [ bgcolor = transparent ]
            node [ shape=circle, margin = 0 ]
-   
+
            root [ label = Ø ];
-           a1 [ label = "a(2)" ]
-   
+           a1 [ label = "a(2)", color = lightgreen ]
+
+           tbl [
+             shape = plaintext
+             label = <
+               <table border='0' cellspacing='0'>
+                 <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+                 <tr><td>a</td><td>2</td><td bgcolor='lightgreen'>1</td></tr>
+               </table>
+             >
+           ]
+
            root -- a1
          }
        #+end_src
-       #+attr_latex: :width 80px
+       #+attr_latex: :width 140px
        #+results:
        [[file:images/fp-tree-4.svg]]
-    3. Padrões resultantes:
-       #+begin_export latex
-       \[
-         \big\{ d, ad \big\}
-       \]
-       #+end_export
+       Padrões extraídos: $\{d\}, \{a,d\}$
+    #+latex: \end{multicols}
+
+    #+latex: \newpage
+
+    Mineração de padrões a partir do item $b$:
+    #+latex: \begin{multicols}{2}
+    #+attr_latex: :options [itemsep=0pt]
+    1. Projeção dos prefixos:
+       #+begin_src dot :file images/fp-tree-5.svg
+         graph g {
+           graph [ bgcolor = transparent ]
+           node [ shape=circle, margin = 0 ]
+
+           root [ label = Ø ];
+           c1 [ label = "c(2)", color = violet ]
+           f1 [ label = "f(1)", color = orange ]
+
+           tbl [
+             shape = plaintext
+             label = <
+               <table border='0' cellspacing='0'>
+                 <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+                 <tr><td>c</td><td>2</td><td bgcolor='violet'>1</td></tr>
+                 <tr><td>f</td><td>1</td><td bgcolor='orange'>1</td></tr>
+               </table>
+             >
+           ]
+
+           root -- c1
+           c1 -- f1
+         }
+       #+end_src
+       #+attr_latex: :width 140px
+       #+results:
+       [[file:images/fp-tree-5.svg]]
+    2. Remoção dos infrequentes:
+       #+begin_src dot :file images/fp-tree-6.svg
+         graph g {
+           graph [ bgcolor = transparent ]
+           node [ shape=circle, margin = 0 ]
+
+           root [ label = Ø ];
+           c1 [ label = "c(2)", color = violet ]
+
+           tbl [
+             shape = plaintext
+             label = <
+               <table border='0' cellspacing='0'>
+                 <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+                 <tr><td>c</td><td>2</td><td bgcolor='violet'>1</td></tr>
+               </table>
+             >
+           ]
+
+           root -- c1
+         }
+       #+end_src
+       #+attr_latex: :width 140px
+       #+results:
+       [[file:images/fp-tree-6.svg]]
+       Padrões extraídos: $\{b\}, \{c,b\}$
+    #+latex: \end{multicols}
+
+    Mineração de padrões a partir do item $a$:
+    #+latex: \begin{multicols}{2}
+    #+attr_latex: :options [itemsep=0pt]
+    1. Projeção dos prefixos:
+       #+begin_src dot :file images/fp-tree-7.svg
+         graph g {
+           graph [ bgcolor = transparent ]
+           node [ shape=circle, margin = 0 ]
+
+           root [ label = Ø ];
+           c1 [ label = "c(2)", color = violet ]
+           f1 [ label = "f(2)", color = orange ]
+
+           tbl [
+             shape = plaintext
+             label = <
+               <table border='0' cellspacing='0'>
+                 <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+                 <tr><td>c</td><td>2</td><td bgcolor='violet'>1</td></tr>
+                 <tr><td>f</td><td>2</td><td bgcolor='orange'>1</td></tr>
+               </table>
+             >
+           ]
+
+           root -- c1
+           c1 -- f1
+         }
+       #+end_src
+       #+attr_latex: :width 140px
+       #+results:
+       [[file:images/fp-tree-7.svg]]
+    2. Não há infrequentes.
+
+       Padrões extraídos: $\{a\}, \{c,a\}, \{a,f\}, \{c,f,a\}$
+    #+latex: \end{multicols}
+
+    Mineração de padrões a partir do item $f$:
+    #+latex: \begin{multicols}{2}
+    #+attr_latex: :options [itemsep=0pt]
+    1. Projeção dos prefixos:
+       #+begin_src dot :file images/fp-tree-8.svg
+         graph g {
+           graph [ bgcolor = transparent ]
+           node [ shape=circle, margin = 0 ]
+
+           root [ label = Ø ];
+           c1 [ label = "c(4)", color = violet ]
+
+           tbl [
+             shape = plaintext
+             label = <
+               <table border='0' cellspacing='0'>
+                 <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+                 <tr><td>c</td><td>4</td><td bgcolor='violet'>1</td></tr>
+               </table>
+             >
+           ]
+
+           root -- c1
+         }
+       #+end_src
+       #+attr_latex: :width 140px
+       #+results:
+       [[file:images/fp-tree-8.svg]]
+    2. Não há infrequentes.
+
+       Padrões extraídos: $\{f\}, \{c,f\}$
+    #+latex: \end{multicols}
+
+    Mineração de padrões a partir do item $f$:
+    #+latex: \begin{multicols}{2}
+    #+attr_latex: :options [itemsep=0pt]
+    1. Projeção dos prefixos:
+       #+begin_src dot :file images/fp-tree-9.svg
+         graph g {
+           graph [ bgcolor = transparent ]
+           node [ shape=circle, margin = 0 ]
+
+           root [ label = Ø ];
+
+           tbl [
+             shape = plaintext
+             label = <
+               <table border='0' cellspacing='0'>
+                 <tr><td>Item</td><td>Frequência</td><td>Nós</td></tr>
+                 <tr><td>-</td><td>-</td><td>-</td></tr>
+               </table>
+             >
+           ]
+         }
+       #+end_src
+       #+attr_latex: :width 140px
+       #+results:
+       [[file:images/fp-tree-9.svg]]
+    2. Não há infrequentes.
+
+       Padrões extraídos: $\{c\}$
+    #+latex: \end{multicols}
+
+** Representações compactas
+   Considerande uma base de dados contendo apenas duas transações:
+   #+begin_export latex
+   \begin{align*}
+     \{ & \\
+     & (0, a_{1}, \hdots, a_{50}), \\
+     & (1, a_{1}, \hdots, a_{100}) \\
+     \} &
+   \end{align*}
+   #+end_export
+   Ao considerar um suporte mínimo igual a 2, essa base apresenta uma quantidade
+   exorbitante de /itemsets/ frequentes:
+   #+begin_export latex
+   \[
+     {100 \choose 1} + \hdots + {100 \choose 100} = 2^{100} - 1
+   \]
+   #+end_export
+   Apesar de ser um caso extremo, é comum encontrar pequenas ocorrências deste padrão em
+   bases de dados maiores. Isso inviabiliza a computação utilizando os métodos descritos
+   anteriormente. \\
+
+   De forma a mitigar este problema, utilizamos representações compactas dos /itemsets/
+   frequentes.
+*** Fronteira da frequência
+    Uma forma de representação compacta denominada /Itemsets/ máximos é obtida ao se
+    considerar o limiar entre os /itemsets/ frequentes e infrequentes. Os /Itemsets/ máximos
+    são os /itemsets/ que não possuem superconjuntos frequentes.
+
+    #+begin_src dot :file images/maximal-itemsets.svg
+      graph G {
+        graph [bgcolor = transparent, rankdir = "TD"]
+
+        subgraph lvl0 {
+          rank = same
+          ∅ [label = "Ø\n1,2,3,4,5,6", fillcolor = ivory, style = filled]
+        }
+        subgraph lvl1 {
+          rank = same
+          "{a}" [label = "{a}\n1,4,6", fillcolor = ivory, style = filled]
+          "{b}" [label = "{b}\n2,5", fillcolor = ivory, style = filled]
+          "{c}" [label = "{c}\n1,2,3,5,6", fillcolor = ivory, style = filled]
+          "{d}" [label = "{d}\n1,4", fillcolor = ivory, style = filled]
+        }
+        subgraph lvl2 {
+          rank = same
+          "{a,b}" [label = "{a,b}\nØ"]
+          "{a,c}" [label = "{a,c}\n1,6", fillcolor = ivory, style = filled]
+          "{a,d}" [label = "{a,d}\n1,4", fillcolor = ivory, style = filled]
+          "{b,c}" [label = "{b,c}\n2,5", color = crimson, fillcolor = ivory, style = filled]
+          "{b,d}" [label = "{b,d}\nØ"]
+          "{c,d}" [label = "{c,d}\nØ"]
+        }
+        subgraph lvl3 {
+          rank = same
+          "{a,b,c}" [label = "{a,b,c}\nØ"]
+          "{a,b,d}" [label = "{a,b,d}\nØ"]
+          "{a,c,d}" [label = "{a,c,d}\n1", color = crimson, fillcolor = ivory, style = filled]
+          "{b,c,d}" [label = "{b,c,d}\nØ"]
+        }
+        subgraph lvl4 {
+          rank = same
+          "{a,b,c,d}" [label = "{a,b,c,d}\nØ"]
+        }
+        subgraph lvl5 {
+          rank = same
+        }
+
+        ∅ -- "{a}"
+        ∅ -- "{b}"
+        ∅ -- "{c}"
+        ∅ -- "{d}"
+
+        "{a}" -- "{a,b}"
+        "{a}" -- "{a,c}"
+        "{a}" -- "{a,d}"
+        "{b}" -- "{a,b}"
+        "{b}" -- "{b,c}"
+        "{b}" -- "{b,d}"
+        "{c}" -- "{a,c}"
+        "{c}" -- "{b,c}"
+        "{c}" -- "{c,d}"
+        "{d}" -- "{a,d}"
+        "{d}" -- "{b,d}"
+        "{d}" -- "{c,d}"
+
+        "{a,b}" -- "{a,b,c}"
+        "{a,b}" -- "{a,b,d}"
+        "{a,c}" -- "{a,b,c}"
+        "{a,c}" -- "{a,c,d}"
+        "{a,d}" -- "{a,b,d}"
+        "{a,d}" -- "{a,c,d}"
+        "{b,c}" -- "{a,b,c}"
+        "{b,c}" -- "{b,c,d}"
+        "{b,d}" -- "{a,b,d}"
+        "{b,d}" -- "{b,c,d}"
+        "{c,d}" -- "{a,c,d}"
+        "{c,d}" -- "{b,c,d}"
+
+        "{a,b,c}" -- "{a,b,c,d}"
+        "{a,b,d}" -- "{a,b,c,d}"
+        "{a,c,d}" -- "{a,b,c,d}"
+        "{b,c,d}" -- "{a,b,c,d}"
+      }
+    #+end_src
+    #+attr_latex: :width 350px
+    #+results:
+    [[file:images/maximal-itemsets.svg]]
+
+    Apesar de ser uma represetação bastante compacta, o cálculo do suporte para os
+    /itemsets/ derivados dessa representação não é viável de forma direta, sendo necessária
+    uma nova passada na base de dados.
+
+    #+latex: \newpage
+*** Classes de equivalência
+    Uma outra forma de obter representações compactas é particionar os /itemsets/ em classes
+    de equivalência, definidas pela cobertura. 
+
+    #+begin_src dot :file images/equivalence-classes.svg
+      graph G {
+        graph [bgcolor = transparent, rankdir = "TD"]
+
+        subgraph lvl0 {
+          rank = same
+          ∅ [label = "Ø\n1,2,3,4,5,6", color = gray]
+        }
+        subgraph lvl1 {
+          rank = same
+          "{a}" [label = "{a}\n1,4,6", color = green]
+          "{b}" [label = "{b}\n2,5", color = crimson]
+          "{c}" [label = "{c}\n1,2,3,5,6", color = cyan]
+          "{d}" [label = "{d}\n1,4", color = purple]
+        }
+        subgraph lvl2 {
+          rank = same
+          "{a,b}" [label = "{a,b}\nØ"]
+          "{a,c}" [label = "{a,c}\n1,6", color = blue]
+          "{a,d}" [label = "{a,d}\n1,4", color = purple]
+          "{b,c}" [label = "{b,c}\n2,5", color = crimson]
+          "{b,d}" [label = "{b,d}\nØ"]
+          "{c,d}" [label = "{c,d}\n1", color = orange]
+        }
+        subgraph lvl3 {
+          rank = same
+          "{a,b,c}" [label = "{a,b,c}\nØ"]
+          "{a,b,d}" [label = "{a,b,d}\nØ"]
+          "{a,c,d}" [label = "{a,c,d}\n1", color = orange]
+          "{b,c,d}" [label = "{b,c,d}\nØ"]
+        }
+        subgraph lvl4 {
+          rank = same
+          "{a,b,c,d}" [label = "{a,b,c,d}\nØ"]
+        }
+        subgraph lvl5 {
+          rank = same
+        }
+
+        ∅ -- "{a}"
+        ∅ -- "{b}"
+        ∅ -- "{c}"
+        ∅ -- "{d}"
+
+        "{a}" -- "{a,b}"
+        "{a}" -- "{a,c}"
+        "{a}" -- "{a,d}"
+        "{b}" -- "{a,b}"
+        "{b}" -- "{b,c}"
+        "{b}" -- "{b,d}"
+        "{c}" -- "{a,c}"
+        "{c}" -- "{b,c}"
+        "{c}" -- "{c,d}"
+        "{d}" -- "{a,d}"
+        "{d}" -- "{b,d}"
+        "{d}" -- "{c,d}"
+
+        "{a,b}" -- "{a,b,c}"
+        "{a,b}" -- "{a,b,d}"
+        "{a,c}" -- "{a,b,c}"
+        "{a,c}" -- "{a,c,d}"
+        "{a,d}" -- "{a,b,d}"
+        "{a,d}" -- "{a,c,d}"
+        "{b,c}" -- "{a,b,c}"
+        "{b,c}" -- "{b,c,d}"
+        "{b,d}" -- "{a,b,d}"
+        "{b,d}" -- "{b,c,d}"
+        "{c,d}" -- "{a,c,d}"
+        "{c,d}" -- "{b,c,d}"
+
+        "{a,b,c}" -- "{a,b,c,d}"
+        "{a,b,d}" -- "{a,b,c,d}"
+        "{a,c,d}" -- "{a,b,c,d}"
+        "{b,c,d}" -- "{a,b,c,d}"
+      }
+    #+end_src
+    #+attr_latex: :width 350px
+    #+results:
+    [[file:images/equivalence-classes.svg]]
+
+    Tal consideração permite duas formas de representações compactas:
+   - /Itemsets/ fechados: :: são os *maiores* /itemsets/ das classes de equivalência. \\
+     No exemplo:
+     #+latex: \begin{multicols}{2}
+     #+attr_latex: :options [itemsep=0pt]
+     - $\{a\}$
+     - $\{c\}$
+     - $\{a,d\}$
+     #+attr_latex: :options [itemsep=0pt]
+     - $\{b,c\}$
+     - $\{a,c\}$
+     - $\{a,c,d\}$
+     #+latex: \end{multicols}
+   - /Itemsets/ geradores mínimos: :: são os *menores* /itemsets/ das classes de equivalência. \\
+     No exemplo:
+     #+latex: \begin{multicols}{2}
+     #+attr_latex: :options [itemsep=0pt]
+     - $\{a\}$
+     - $\{b\}$
+     - $\{c\}$
+     #+attr_latex: :options [itemsep=0pt]
+     - $\{d\}$
+     - $\{a,c\}$
+     - $\{c,d\}$
+     #+latex: \end{multicols}
+   
+   Enquanto os /itemsets/ fechados são únicos, os geradores mínimos não necessariamente
+   são. Portanto, a representação utilizando geradores mínimos pode apresentar
+   redundância, não sendo muito compacta em casos extremos.
+
+   #+latex:\newpage
+*** Algoritmos
+    Apesar de ser possível embutir tais representações nos algoritmos descritos
+    anteriormente, isso apenas auxiliaria na digestão dos resultados, não apresentado
+    ganho de desempenho computacional algum. De forma a explorar tal possibilidade de
+    ganho computacional, algoritmos específicos se fazem necessários.
+    - MAFIA: :: /Maximal Frequent Itemset Algorithm/ \\
+      O algoritmo utiliza uma abordagem /best-first/branch-and-bound/ para navegar o
+      reticulado, adotando uma representação vertical dos dados. Além disso, explora a
+      ordem lexicográfica dos itens, bem como a relação de ordem parcial de subconjuntos
+      entre os /itemsets/.
+
+      Duas podas são realizadas:
+      - Reordenamento dinâmico: Ao visitar cada nó na busca em profundidade, seus filhos
+        imediatos são verificados, e os itens que causam infrequência são desconsiderados
+        para a subárvore atual.
+      - /Parent Equivalence Pruning/ (PEP): Caso a cobertura de um dos itens candidatos seja
+        superior à do /itemset/ atual, ele é imediatamente adicionado a este /itemset/,
+        restringindo buscas adicionais relativas à este item.
+    - DCI Closed: :: @@latex:\hfill@@ \\
+      O algoritmo utiliza uma abordagem de divisão e conquista no reticulado, adotano uma
+      representação vertical dos dados. Tal abordagem se mostra extremamente interessante
+      na medida que permite a paralelização da execução do algoritmo. Além disso, também
+      explora uma ordem lexicográfica sobre os itens, e sua extensão sobre os /itemsets/.
+
+      A ideia central do algoritmo é escalar o reticulado, visitando cada classe de
+      equivalência uma única vez. Somente um candidato de cada classe é avaliado, e novos
+      candidatos são gerados estendendo os conjuntos fechados com itens ainda não
+      investigados.

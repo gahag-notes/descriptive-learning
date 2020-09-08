@@ -14,15 +14,15 @@
 <ellipse fill="none" stroke="black" cx="18" cy="-91" rx="18" ry="18"/>
 <text text-anchor="middle" x="18" y="-87.3" font-family="Times,serif" font-size="14.00">Ø</text>
 </g>
-<!-- a1 -->
+<!-- c1 -->
 <g id="node2" class="node">
-<title>a1</title>
-<ellipse fill="none" stroke="lightgreen" cx="18" cy="-18" rx="18" ry="18"/>
-<text text-anchor="middle" x="18" y="-14.3" font-family="Times,serif" font-size="14.00">a(2)</text>
+<title>c1</title>
+<ellipse fill="none" stroke="violet" cx="18" cy="-18" rx="18" ry="18"/>
+<text text-anchor="middle" x="18" y="-14.3" font-family="Times,serif" font-size="14.00">c(2)</text>
 </g>
-<!-- root&#45;&#45;a1 -->
+<!-- root&#45;&#45;c1 -->
 <g id="edge1" class="edge">
-<title>root&#45;&#45;a1</title>
+<title>root&#45;&#45;c1</title>
 <path fill="none" stroke="black" d="M18,-72.81C18,-61.65 18,-47.16 18,-36.03"/>
 </g>
 <!-- tbl -->
@@ -31,9 +31,9 @@
 <text text-anchor="start" x="57" y="-96.8" font-family="Times,serif" font-size="14.00">Item</text>
 <text text-anchor="start" x="95" y="-96.8" font-family="Times,serif" font-size="14.00">Frequência</text>
 <text text-anchor="start" x="180" y="-96.8" font-family="Times,serif" font-size="14.00">Nós</text>
-<text text-anchor="start" x="69.5" y="-77.8" font-family="Times,serif" font-size="14.00">a</text>
+<text text-anchor="start" x="70" y="-77.8" font-family="Times,serif" font-size="14.00">c</text>
 <text text-anchor="start" x="130.5" y="-77.8" font-family="Times,serif" font-size="14.00">2</text>
-<polygon fill="lightgreen" stroke="transparent" points="178,-72 178,-91 210,-91 210,-72 178,-72"/>
+<polygon fill="violet" stroke="transparent" points="178,-72 178,-91 210,-91 210,-72 178,-72"/>
 <text text-anchor="start" x="189" y="-77.8" font-family="Times,serif" font-size="14.00">1</text>
 </g>
 </g>
