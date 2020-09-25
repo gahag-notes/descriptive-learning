@@ -32,10 +32,11 @@
   treinamento seja realizado apenas com uma amostra. Já no aprendizado descritivo, nos
   limitamos à amostra, afinal ela constitui o alvo total de análise.
 * Mineração de itens frequentes
-  Para um conjunto de dados:
+  Define-se como itens frequentes um conjunto itens que são recorrentes em um conjunto de
+  transações. Considera-se nos conjuntos de dados:
   #+attr_latex: :options [itemsep=0pt]
-  1. Chamamos de itens os elementos do conjunto de variáveis de análise $I$.
-  2. Um conjunto $X \subseteq I$ é denominado /itemset/
+  1. Os itens são os elementos do conjunto de variáveis de análise $I$.
+  2. Um conjunto $X \subseteq I$ é denominado /itemset/.
   3. O conjunto de todos /k/-/itemsets/ é denotado port $I^{(k)}$.
   4. A amostra de transações é denominada por $T$.
   5. Cada transação é identificada unicamente por um =tid=.
@@ -85,7 +86,7 @@
    Devido à natureza computacionalmente intensa da primeira etapa, nossos estudos a focam. \\
 
    O limiar que separa os itens frequentes dos infrequentes é chamado de *suporte mínimo*. \\
-   O suporte mínimo de um /itemset/ é o tamanho de sua cobertura:
+   O suporte de um /itemset/ é o tamanho de sua cobertura:
    #+begin_export latex
    \[
      \text{sup}(X) = \big|c(X)\big|
@@ -603,7 +604,7 @@
 *** Fronteira da frequência
     Uma forma de representação compacta denominada /Itemsets/ máximos é obtida ao se
     considerar o limiar entre os /itemsets/ frequentes e infrequentes. Os /Itemsets/ máximos
-    são os /itemsets/ que não possuem superconjuntos frequentes.
+    são os /itemsets/ frequentes que não possuem superconjuntos frequentes.
 
     #+begin_src dot :file images/maximal-itemsets.svg
       graph G {
