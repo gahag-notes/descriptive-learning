@@ -834,3 +834,137 @@
       equivalência uma única vez. Somente um candidato de cada classe é avaliado, e novos
       candidatos são gerados estendendo os conjuntos fechados com itens ainda não
       investigados.
+    #+latex: \newpage
+* Mineração de sequências frequentes
+  Define-se sequências como uma lista ordenada de /itemsets/ *entre* transações. Desta
+  forma, enquanto /itemsets/ são padrões intra-transações, sequências são padrões
+  inter-transações.  \\
+
+  Inicialmente, considera-se o conjunto de dados como um conjunto de transações compostas
+  por:
+  #+attr_latex: :options [itemsep=0pt]
+  - Identificador de cliente
+  - /Timestamp/ da transação
+  - Conjunto de itens
+
+  Uma sequência de /itemsets/ $\alpha = \langle a_1, \hdots, a_n \rangle$ é subsequência de
+  $\beta = \langle b_1, \hdots, b_m \rangle$, denotado por $\alpha \sqsubseteq \beta$, se:
+  1. Existe uma mapeamento $\varphi: \alpha \to \beta$ @@latex:\hfill@@ Todos /itemsets/ de
+     $\alpha$ estão associados à $itemsets$ de $\beta$.
+  2. $\forall\, a \in \alpha, b = \varphi(a): a \subseteq b$ @@latex:\hfill@@ Tal
+     associação apresenta uma relação de subconjunto.
+  3. $\forall\, i < j, b_k = \varphi(a_i), b_l = \varphi(b_j): k < l$ @@latex:\hfill@@ A
+     ordem relativa entre $\alpha$ e $\beta$ é mantida.
+
+  A partir da definição de sequência, redefine-se a base de dados como um conjunto dos
+  clientes e suas respectivas sequências de transações. Tal definição constitui uma
+  representação horizontal da base de dados.
+  #+begin_export latex
+  \[
+    \mathcal{D}: \{ C \times S \}
+  \]
+  #+end_export
+  |   <c>    |                          <c>                           |
+  | Cliente  |                       Transações                       |
+  |----------+--------------------------------------------------------|
+  |  $c_1$   | $s_1 = \langle t_{1, 1}, \hdots, t_{1, i} \rangle$ |
+  | $\vdots$ |                        $\vdots$                        |
+  |  $c_n$   | $s_n = \langle t_{n, 1}, \hdots, t_{n, j} \rangle$ |
+  Onde $t_{k,i}$ é o /itemset/ da $i\text{-ésima}$ transação do cliente $k$. \\
+
+  Vale notar que tal representação abdica da informação precisa do /timestamp/ de cada
+  transação, mantendo apenas a ordem temporal relativa dos /itemsets/. \\
+
+  Em seguida, definse-se a função suporte, mantendo-se a propriedade do Apriori:
+  #+begin_export latex
+  \begin{align*}
+    & \text{sup}: S \to \mathbb{N} \\
+    & \text{sup}(\alpha) = \big|\left\{ \, c_k \mid \forall\, (c_k, s) \in \mathcal{D}: \alpha \sqsubseteq s \, \right\}\big|
+  \end{align*}
+  #+end_export
+  Ou seja, um cliente $c_k$ suporta uma sequência $\alpha$ se $\alpha$ é uma subsequência
+  da sequência de transações $s_k$. \\
+
+  Ademais, extende-se os conceitos que temos na mineração de itens frequentes:
+  - Ordem: :: A ordem de uma sequência $\alpha$ é $k$ ($\alpha$ é uma $k\text{-sequência}$) onde
+    $k = \sum\limits_{\forall a \in \alpha} |a|$
+  - Frequente: :: Uma sequência $\alpha$ é frequente se seu suporte é maior ou igual ao
+    suporte mínimo.
+  - Máxima: :: Uma sequência frequente é máxima quando não há supersequências frequentes.
+  - Fechada: :: Uma sequência frequente é fechada quando não há uma supersequência de
+    mesmo suporte.
+  #+latex: \newpage
+** Algoritmos
+   Os algoritmos tradicionais para mineração de sequências frequentes se baseiam nos
+   algoritmos vistos anteriormente, em particular o Apriori, Eclat e FP-Growth.
+*** /Generalized Sequential Patterns/
+    Baseado no Apriori, o GSP adota a mesma estratégia de busca em largura, utilizando as
+    sequências de ordem $k-1$ para gerar candidatas de tamanho $k$. Além disso, utiliza-se
+    a propriedade de anti-monotonicidade da função suporte para executar podas no espaço
+    de busca. \\
+
+    Bem como no Apriori, são executadas diversas passadas na base de dados:
+    1. Inicialmente, verifica-se o suporte das sequêcias unitárias, descartando-se as
+       infrequentes.
+    2. Cada par $\langle x \rangle$ e $\langle y \rangle$ de $1\text{-sequências}$ dá
+       origem a duas $2\text{-supersequências}$:
+       #+attr_latex: :options [itemsep=0pt,label=\Roman*.]
+       1. $\langle xy \rangle$
+       2. $\langle x, y \rangle$
+       Exceto quando $x = y$, onde apenas a segunda é considerada.
+    3. Para as sequências não unitárias, gera-se os candidatos da seguinte forma:
+       #+attr_latex: :options [itemsep=0pt,label=\arabic*.]
+       1. Sejam $s_1 = \left\langle \{i \mid x\} \mid s \mid y \right\rangle$ e
+          $s_2 = \left\langle x \mid s \mid \{y \mid j\} \right\rangle$ sequências
+          de ordem $k - 1$.
+
+          Onde $s$ é uma sequência em comum, possivelmente vazia, e $x$ e $y$ são
+          /itemsets/, possivelmente vazios. \\
+
+          De forma equivalente, $s_1$ e $s_2$ diferem respectivamente no primeiro item do
+          primeiro elemento de $s_1$ e no último item do último elemento de $s_2$. \\
+       2. Gera-se uma nova sequência: $\langle \{i \mid x\} \mid s \mid \{y \mid j \} \rangle$
+    4. Após a geração de novos candidatos, seus suportes são calculados e os infrequentes
+       descartados.
+    5. O algoritmo encerra quando não há mais candidatos frequentes.
+*** /Sequential Pattern Discorvery using Equivalence classes/
+    Baseado no Eclat, o Spade utiliza também uma representação vertical da base de dados,
+    e opera dividindo o espaço de busca pelo prefixo das sequências. \\
+
+    Primeiramente, define-se como /index-set/ de um item o conjunto de clientes e índices em
+    que este item ocorre na respectiva sequência:
+    #+begin_export latex
+    \[
+      \mathcal{L}(i) = \big\{ (c_k, \text{indexes}(i, s_k)) \mid \forall\, (c_k, s_k) \in \mathcal{D} \big\}
+    \]
+    #+end_export
+
+    A partir desta definição, apresenta-se uma representação vertical da base de dados
+    como o conjunto de itens e suas /index-set/:
+    #+begin_export latex
+    \[
+      \big\{ (i, \mathcal{L}(i)) \mid \forall\, i \in I \big\}
+    \]
+    #+end_export
+
+    Onde o suporte de um item é trivialmente calculado por:
+    #+begin_export latex
+    \[
+      \text{sup}_\text{item}(i) = \big|\mathcal{L}(i)\big|
+    \]
+    #+end_export
+
+    Define-se as classes de equivalência como as $k\text{-sequências}$ que compartilham um
+    prefixo de tamanho $k-1$.
+    #+latex:\newpage
+
+    A partir de tais definições, o algoritmo opera gerando novas sequências a partir da
+    junção temporal de duas sequências que pertençam à mesma classe de equivalência. \\
+
+    O /index-set/ de uma nova sequência pode ser convenientemente calculado como a
+    interseção dos /index-sets/ das sequências geradoras, e desta forma extende-se sua
+    definição para sequências. Considerando que o suporte é definido como a cardinalidade
+    do /index-set/, sua definição também é extendida por consequência. \\
+
+    Utilizando tal método de forma iterativa, o algoritmo encerra quando não houver mais
+    sequências a serem geradas.
