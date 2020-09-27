@@ -913,17 +913,21 @@
        2. $\langle x, y \rangle$
        Exceto quando $x = y$, onde apenas a segunda é considerada.
     3. Para as sequências não unitárias, gera-se os candidatos da seguinte forma:
-       #+attr_latex: :options [itemsep=0pt,label=\arabic*.]
-       1. Sejam $s_1 = \left\langle \{i \mid x\} \mid s \mid y \right\rangle$ e
-          $s_2 = \left\langle x \mid s \mid \{y \mid j\} \right\rangle$ sequências
-          de ordem $k - 1$.
-
-          Onde $s$ é uma sequência em comum, possivelmente vazia, e $x$ e $y$ são
-          /itemsets/, possivelmente vazios. \\
-
+       #+attr_latex: :options [itemsep=0pt,label=\Roman*.]
+       1. Sejam $s_1 = \left\langle \{i \mid x\} \mid s \right\rangle$ e
+          $s_2 = \left\langle s \mid \{y \mid j\} \right\rangle$ sequências, onde
+          $\left\langle x \mid s \right\rangle = \left\langle s \mid y \right\rangle$
+          e $i \neq j$.
+          - $s_1$ e $s_2$ são sequências de ordem $k > 1$.
+          - $s$ é uma sequência em comum, possivelmente vazia.
+          - $x$ e $y$ são /itemsets/, possivelmente vazios.
+          - $i$ e $j$ são ítens.
           De forma equivalente, $s_1$ e $s_2$ diferem respectivamente no primeiro item do
-          primeiro elemento de $s_1$ e no último item do último elemento de $s_2$. \\
-       2. Gera-se uma nova sequência: $\langle \{i \mid x\} \mid s \mid \{y \mid j \} \rangle$
+          primeiro elemento de $s_1$ e no último item do último elemento de $s_2$.
+       2. Gera-se uma nova sequência:
+          - se $|s| = 0$: $\langle \{i \mid x \mid j \} \rangle$ @@latex:\hfill@@
+            Note que $x = y$ neste caso.
+          - se $|s| > 0$: $\langle \{i \mid x\} \mid s \mid \{y \mid j \} \rangle$
     4. Após a geração de novos candidatos, seus suportes são calculados e os infrequentes
        descartados.
     5. O algoritmo encerra quando não há mais candidatos frequentes.
