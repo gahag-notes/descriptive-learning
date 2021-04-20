@@ -919,7 +919,7 @@
           $\left\langle x \mid s \right\rangle = \left\langle s \mid y \right\rangle$
           e $i \neq j$.
           - $s_1$ e $s_2$ são sequências de ordem $k > 1$.
-          - $s$ é uma sequência em comum, possivelmente vazia.
+          - $s$ é uma subsequência em comum, possivelmente vazia.
           - $x$ e $y$ são /itemsets/, possivelmente vazios.
           - $i$ e $j$ são ítens.
           De forma equivalente, $s_1$ e $s_2$ diferem respectivamente no primeiro item do
